@@ -1,0 +1,57 @@
+---
+title: "lab_2"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dplyr)
+library(reshape2)
+library(haven)
+```
+
+
+```{r}
+csv = read.csv("lab2.csv")
+csv
+```
+
+```{r}
+data_test = cbind(melt(summarize_all(csv, mean), id='patient_id'),melt(summarize_all(csv, sd), id='patient_id'),id = 'variable')
+
+
+names(data_test)[2] = "column"
+names(data_test)[3] = "mean"
+names(data_test)[4] = "patient_id_2"
+names(data_test)[6] = "sd"
+
+data = select(data_test,c("column","mean","sd"))
+data_qol = subset(data,column %in% c("base_qol","first_qol","second_qol"))
+data_pain = subset(data,column %in% c("base_pain","first_pain","second_pain"))
+data_sport = subset(data,column %in% c("base_sport","first_sport","second_sport"))
+x = c("baseline","one year","two years")
+gg = ggplot(data_qol, aes(x=x, y = mean, group= "column",color="red")) + geom_line() + geom_point() + geom_errorbar(aes(x =x,ymin = mean-sd, ymax=mean+sd,color= "red"))
+gg = gg + geom_line(data =data_pain, aes(x=x, y = mean, group= "column",color = "orange")) + geom_point(data = data_pain, aes(x=x, y= mean, group= "column", color = "orange")) + geom_errorbar(data=data_pain,aes(x=x, ymin = mean - sd, ymax=mean+sd, color= "orange"))
+gg = gg + geom_line(data =data_sport, aes(x=x, y = mean, group= "column",color = "blue")) + geom_point(data = data_sport, aes(x=x, y= mean, group= "column", color = "blue")) + geom_errorbar(data=data_sport,aes(x=x, ymin = mean - sd, ymax=mean+sd, color= "blue"))
+plot(gg)
+```
+
+
+```{r}
+all_content = readLines("coverage.csv")
+skip = all_content[-1:-2]
+
+coverage = read.csv(textConnection(skip))
+coverage = head(coverage,which(coverage["Location"]=="Notes"))
+
+all_content = readLines("expenditures.csv")
+skip = all_content[-1:-2]
+
+expenditures = read.csv(textConnection(skip))
+expenditures = head(expenditures, which(expenditures["Location"]=="Notes"))
+
+total = cbind(expenditures, coverage, id="Location")
+```
+
+
